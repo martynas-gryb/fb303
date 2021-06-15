@@ -58,7 +58,7 @@ void DynamicQuantileStatWrapper<N>::addValue(
   const SubkeyArray subkeyArray{{std::forward<Args>(subkeys)...}};
 
   folly::hazptr_holder<> h;
-  auto mapPtr = h.protect(stats_);
+  auto mapPtr = h.get_protected(stats_);
 
   auto it = mapPtr->map.find(subkeyArray);
   if (it != mapPtr->map.end()) {
@@ -75,12 +75,12 @@ void DynamicQuantileStatWrapper<N>::addValue(
     if (newMap) {
       delete newMap;
     }
-    mapPtr = h.protect(stats_);
+    mapPtr = h.get_protected(stats_);
     newMap = new MapHolder(*mapPtr);
     newMap->map[subkeyArray] = stat;
   } while (
       !stats_.compare_exchange_weak(mapPtr, newMap, std::memory_order_acq_rel));
-  h.reset_protection();
+  h.reset();
   mapPtr->retire();
   stat->addValue(value, now);
 }
